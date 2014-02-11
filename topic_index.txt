@@ -1,0 +1,22 @@
+MQTT topic index
+----------------
+
+// Name of the node //
+topic : rfm12/[decimal node ID (rfm12 address)]/name 
+value : <8 chars max name>
+
+// Last seen frame //
+topic : rfm12/[decimal node ID (rfm12 address)]/lastseen
+value : unix utc timestamp
+
+// Event topic // 
+topic : rfm12/[decimal node ID (rfm12 address)]/event
+value : event ID (1 to 255)
+
+// Boolean topic // 
+topic : rfm12/[decimal node ID (rfm12 address)]/event
+value : event ID (1 to 255)
+
+// Unsigned integer topic // 
+topic : rfm12/[decimal node ID (rfm12 address)]/uint/[uint ID (1 to 255)]
+value : value of uint (0 to 65535)
