@@ -41,7 +41,7 @@ node 0x05 send hello frame with name "MAILBOX_"
 node 0x13 send event ID 1
 0x13 0x02 0x01
 
-- MQTT topic : /rfm12/19/event 1
+- MQTT topic : /rfm12/19/evt 1
 
 3. boolean frame
 ----------------

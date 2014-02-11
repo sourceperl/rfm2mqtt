@@ -10,12 +10,12 @@ topic : rfm12/[decimal node ID (rfm12 address)]/lastseen
 value : unix utc timestamp
 
 // Event topic // 
-topic : rfm12/[decimal node ID (rfm12 address)]/event
+topic : rfm12/[decimal node ID (rfm12 address)]/evt
 value : event ID (1 to 255)
 
 // Boolean topic // 
-topic : rfm12/[decimal node ID (rfm12 address)]/event
-value : event ID (1 to 255)
+topic : rfm12/[decimal node ID (rfm12 address)]/bool/[bool ID (1 to 255)]
+value : value of bool (0 or 1)
 
 // Unsigned integer topic // 
 topic : rfm12/[decimal node ID (rfm12 address)]/uint/[uint ID (1 to 255)]
