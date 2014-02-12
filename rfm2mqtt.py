@@ -10,6 +10,7 @@ import os
 import logging
 import signal
 import socket
+import string
 import time
 import serial
 import sys
@@ -216,7 +217,6 @@ def open_serial(port, speed):
                     speed + " baud")
     raise SystemExit
 
-
 def main_loop():
   """
   The main loop in which we stay connected to the broker
@@ -236,13 +236,24 @@ def main_loop():
           raise FrameDecodeError("node ID not in 2 to 127 interval")
         # frame type : value between 1 and 4
         frame_type = int(items[2], 16)
-        if (frame_type <= 1) or (frame_type > 4):
+        if (frame_type < 1) or (frame_type > 4):
           raise FrameDecodeError("frame type not in 1 to 4 interval")
-
+        # publish lastseen for this node
+        mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/lastseen", 
+                   str(int(time.time())))
+        ## DEBUG
         print("node %d type %d" % (node_id, frame_type))
         # decode variable header
         if (frame_type == HELLO_FRAME):
-          do_nothing = 1
+          if (len(items[3:]) != 8):
+            raise FrameDecodeError("name must be 8 chars length in hello frame")
+          # convert hex list to str ['4D'..., '41'] -> 'M...A'
+          node_name = "".join([chr(int(hex_char,16)) for hex_char in items[3:]])
+          if (not all(c in string.printable for c in node_name)):
+            raise FrameDecodeError("name char must be printable in hello frame")
+          # publish node name
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/name", 
+                     node_name)
         elif (frame_type == EVENT_FRAME):
           # event_id : value between 1 and 255
           event_id = int(items[3], 16)
@@ -270,7 +281,7 @@ def main_loop():
           if (uint_id == 0):
             raise FrameDecodeError("uint id not in 1 to 255 interval")
           # uint_val : must be 0x00 for 0 or 0x01 for 1
-          uint_val = int(items[4], 16)
+          uint_val = (int(items[5], 16) << 8) + int(items[4], 16) 
           # publish bool
           mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/uint/" + str(uint_id), 
                      uint_val)
