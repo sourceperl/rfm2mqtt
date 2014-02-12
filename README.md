@@ -7,4 +7,10 @@ Python
 ------
 
 add paho MQTT to your Python lib :
+
   sudo pip install paho-mqtt
+
+MQTT
+----
+
+  sudo apt-get install mosquitto mosquitto-clients
