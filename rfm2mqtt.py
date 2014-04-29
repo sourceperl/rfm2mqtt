@@ -31,7 +31,9 @@ HELLO_FRAME,
 EVENT_FRAME,
 BOOL_FRAME,
 UINT_FRAME,
-) = range(5)
+INT_FRAME,
+FLOAT_FRAME,
+) = range(7)
 
 client_id = "rfm2mqtt_%d" % os.getpid()
 mq = paho.Client(client_id)
@@ -267,7 +269,7 @@ def main_loop():
           bool_id = int(items[3], 16)
           if (bool_id == 0):
             raise FrameDecodeError("bool id not in 1 to 255 interval")
-          # bool_val : must be 0x00 for 0 or 0x01 for 1
+          # bool_val : must be 0x00 for false or 0x01 for true
           if (int(items[4], 16) == 1):
             bool_val = "1"
           else:
@@ -280,11 +282,37 @@ def main_loop():
           uint_id = int(items[3], 16)
           if (uint_id == 0):
             raise FrameDecodeError("uint id not in 1 to 255 interval")
-          # uint_val : must be 0x00 for 0 or 0x01 for 1
+          # uint_val :
           uint_val = (int(items[5], 16) << 8) + int(items[4], 16) 
           # publish bool
           mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/uint/" + str(uint_id), 
                      uint_val)
+        elif (frame_type == INT_FRAME):
+          # int_id : value between 1 and 255
+          int_id = int(items[3], 16)
+          if (int_id == 0):
+            raise FrameDecodeError("int id not in 1 to 255 interval")
+          # int_val :
+          int_val = (int(items[5], 16) << 8) + int(items[4], 16)
+          # two's complement
+          if((int_val&(1<<15)) != 0):
+            int_val = int_val - (1<<16)
+          # publish bool
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/int/" + str(int_id), 
+                     int_val)
+        elif (frame_type == FLOAT_FRAME):
+          # float_id : value between 1 and 255
+          float_id = int(items[3], 16)
+          if (float_id == 0):
+            raise FrameDecodeError("float id not in 1 to 255 interval")
+          # float_val :
+          float_val = (int(items[7], 16) << 24) + int(items[6], 16) << 16) + 
+                       int(items[5], 16) << 8) + int(items[4], 16)
+          # float convertion
+          #TODO
+          # publish bool
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/float/" + str(float_id), 
+                     float_val)
       # it's a message
       elif (items[0] == "M"):
         do_nothing = 1

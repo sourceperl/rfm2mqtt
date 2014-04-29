@@ -58,11 +58,33 @@ node 0x13 send bool ID 15 = true
 4. unsigned int frame
 ---------------------
 
-[node_id][0x04][bool_id (1 byte)][bool_value (1 byte = false/0x00 or true/0x01)]
+[node_id][0x04][uint_id (1 byte)][uint_value (2 bytes)]
 
 - sample :
 node 0x10 send unsigned integer ID#3 = 15542
 0x10 0x04 0x03 0x3C 0xB6
 
-- MQTT topic : /rfm12/19/uint/3 15542
+- MQTT topic : /rfm12/16/int/3 15542
+
+5. signed int frame
+-------------------
+
+[node_id][0x05][int_id (1 byte)][int_value (2 bytes)]
+
+- sample :
+node 0x11 send signed integer ID#7 = -31467
+0x11 0x05 0x07 0x15 0x85
+
+- MQTT topic : /rfm12/17/int/7 -31467
+
+6. float frame
+--------------
+
+[node_id][0x06][float_id (1 byte)][float_value (4 bytes)]
+
+- sample :
+TODO
+
+- MQTT topic : 
+TODO
 

@@ -20,3 +20,11 @@ value : value of bool (0 or 1)
 // Unsigned integer topic // 
 topic : rfm12/[decimal node ID (rfm12 address)]/uint/[uint ID (1 to 255)]
 value : value of uint (0 to 65535)
+
+// Signed integer topic // 
+topic : rfm12/[decimal node ID (rfm12 address)]/int/[int ID (1 to 255)]
+value : value of int (-32768 to 32767)
+
+// Float topic // 
+topic : rfm12/[decimal node ID (rfm12 address)]/float/[float ID (1 to 255)]
+value : value of float
