@@ -6,11 +6,15 @@
 
 # share, it's happiness !
 
+#TODO
+# use struct pack/unpack to decode frame (more efficiency and devel friendly)
+
 import os
 import logging
 import signal
 import socket
 import string
+import struct
 import time
 import serial
 import sys
@@ -238,8 +242,8 @@ def main_loop():
           raise FrameDecodeError("node ID not in 2 to 127 interval")
         # frame type : value between 1 and 4
         frame_type = int(items[2], 16)
-        if (frame_type < 1) or (frame_type > 4):
-          raise FrameDecodeError("frame type not in 1 to 4 interval")
+        if (frame_type < 1) or (frame_type > 6):
+          raise FrameDecodeError("frame type not in 1 to 6 interval")
         # publish lastseen for this node
         mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/lastseen", 
                    str(int(time.time())))
@@ -306,10 +310,10 @@ def main_loop():
           if (float_id == 0):
             raise FrameDecodeError("float id not in 1 to 255 interval")
           # float_val :
-          float_val = (int(items[7], 16) << 24) + int(items[6], 16) << 16) + 
-                       int(items[5], 16) << 8) + int(items[4], 16)
+          float_val = ((int(items[7], 16) << 24) + (int(items[6], 16) << 16) +
+                       (int(items[5], 16) << 8) + (int(items[4], 16)))
           # float convertion
-          #TODO
+          float_val = struct.unpack('f', struct.pack('I', float_val))[0]
           # publish bool
           mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/float/" + str(float_id), 
                      float_val)
