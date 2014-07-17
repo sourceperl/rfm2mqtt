@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# script based on this wonderful repo : 
+# script based on this wonderful repo :
 # https://github.com/kylegordon/mqtt-rfm12b.git
 
 # share, it's happiness !
@@ -21,7 +21,7 @@ import sys
 import paho.mqtt.client as paho
 
 # Constant
-DEBUG           = 1
+DEBUG           = 0
 LOGFILE         = "rfm2mqtt.log"
 SERIAL_DEVICE   = "/dev/ttyUSB0"
 SERIAL_BAUD     = 115200
@@ -215,7 +215,7 @@ def open_serial(port, speed):
   global ser
   try:
     logging.info("Connecting to " + port + " at " + speed + " baud")
-    ser = serial.Serial(port, speed)  
+    ser = serial.Serial(port, speed)
     ser.flushInput()
   except:
     logging.warning("Unable to connect to " +
@@ -234,7 +234,7 @@ def main_loop():
     try:
       logging.debug("items list is %s", items)
       # it's a receive frame
-      if (items[0] == "R"): 
+      if (items[0] == "R"):
         # decode fix header
         # node id : value between 2 and 127
         node_id    = int(items[1], 16)
@@ -245,7 +245,7 @@ def main_loop():
         if (frame_type < 1) or (frame_type > 6):
           raise FrameDecodeError("frame type not in 1 to 6 interval")
         # publish lastseen for this node
-        mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/lastseen", 
+        mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/lastseen",
                    str(int(time.time())))
         ## DEBUG
         print("node %d type %d" % (node_id, frame_type))
@@ -258,15 +258,15 @@ def main_loop():
           if (not all(c in string.printable for c in node_name)):
             raise FrameDecodeError("name char must be printable in hello frame")
           # publish node name
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/name", 
-                     node_name)
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/name",
+                     node_name, retain=True)
         elif (frame_type == EVENT_FRAME):
           # event_id : value between 1 and 255
           event_id = int(items[3], 16)
           if (event_id == 0):
             raise FrameDecodeError("event id not in 1 to 255 interval")
           # publish event
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/evt", 
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/evt",
                      str(event_id))
         elif (frame_type == BOOL_FRAME):
           # bool_id : value between 1 and 255
@@ -279,7 +279,7 @@ def main_loop():
           else:
             bool_val = "0"
           # publish bool
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/bool/" + str(bool_id), 
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/bool/" + str(bool_id),
                      bool_val)
         elif (frame_type == UINT_FRAME):
           # uint_id : value between 1 and 255
@@ -287,9 +287,9 @@ def main_loop():
           if (uint_id == 0):
             raise FrameDecodeError("uint id not in 1 to 255 interval")
           # uint_val :
-          uint_val = (int(items[5], 16) << 8) + int(items[4], 16) 
+          uint_val = (int(items[5], 16) << 8) + int(items[4], 16)
           # publish bool
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/uint/" + str(uint_id), 
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/uint/" + str(uint_id),
                      uint_val)
         elif (frame_type == INT_FRAME):
           # int_id : value between 1 and 255
@@ -302,7 +302,7 @@ def main_loop():
           if((int_val&(1<<15)) != 0):
             int_val = int_val - (1<<16)
           # publish bool
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/int/" + str(int_id), 
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/int/" + str(int_id),
                      int_val)
         elif (frame_type == FLOAT_FRAME):
           # float_id : value between 1 and 255
@@ -315,14 +315,14 @@ def main_loop():
           # float convertion
           float_val = struct.unpack('f', struct.pack('I', float_val))[0]
           # publish bool
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/float/" + str(float_id), 
+          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/float/" + str(float_id),
                      float_val)
       # it's a message
       elif (items[0] == "M"):
         do_nothing = 1
-      # it's a error report       
+      # it's a error report
       elif (items[0] == "E"):
-        do_nothing = 1       
+        do_nothing = 1
     except (IndexError, ValueError):
       logging.debug("except IndexError or ValueError occur, skip frame")
     except FrameDecodeError as e_msg:
