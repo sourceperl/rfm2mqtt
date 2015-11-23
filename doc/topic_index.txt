@@ -2,29 +2,28 @@ MQTT topic index
 ----------------
 
 // Name of the node //
-topic : rfm12/[decimal node ID (rfm12 address)]/name 
-value : <8 chars max name>
+topic : rfm12/[decimal node ID (rfm12 address)]/infos
+value : json message with :
+       - name : name of the node (8 chars string)
+       - last_hello : date of last hello message send (zulu datetime string)
+       - last_seen : date of last message send (zulu datetime string)
 
-// Last seen frame //
-topic : rfm12/[decimal node ID (rfm12 address)]/lastseen
-value : unix utc timestamp
-
-// Event topic // 
+// Event topic //
 topic : rfm12/[decimal node ID (rfm12 address)]/evt
 value : event ID (1 to 255)
 
-// Boolean topic // 
+// Boolean topic //
 topic : rfm12/[decimal node ID (rfm12 address)]/bool/[bool ID (1 to 255)]
 value : value of bool (0 or 1)
 
-// Unsigned integer topic // 
+// Unsigned integer topic //
 topic : rfm12/[decimal node ID (rfm12 address)]/uint/[uint ID (1 to 255)]
 value : value of uint (0 to 65535)
 
-// Signed integer topic // 
+// Signed integer topic //
 topic : rfm12/[decimal node ID (rfm12 address)]/int/[int ID (1 to 255)]
 value : value of int (-32768 to 32767)
 
-// Float topic // 
+// Float topic //
 topic : rfm12/[decimal node ID (rfm12 address)]/float/[float ID (1 to 255)]
 value : value of float

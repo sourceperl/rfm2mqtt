@@ -19,15 +19,20 @@ import time
 import serial
 import sys
 import paho.mqtt.client as paho
+from datetime import datetime
+import pytz
+import json
 
 # Constant
-DEBUG           = 0
-LOGFILE         = "rfm2mqtt.log"
-SERIAL_DEVICE   = "/dev/ttyUSB0"
-SERIAL_BAUD     = 115200
-MQTT_HOST       = "127.0.0.1"
-MQTT_PORT       = 1883
+DEBUG = 0
+LOGFILE = "rfm2mqtt.log"
+SERIAL_DEVICE = "/dev/ttyUSB0"
+SERIAL_BAUD = 115200
+MQTT_HOST = "127.0.0.1"
+MQTT_PORT = 1883
 MQTT_ROOT_TOPIC = "rfm12/"
+LOGFORMAT = '%(asctime)-15s %(message)s'
+
 # Frame type
 (
 RESERVED_FRAME,
@@ -39,25 +44,25 @@ INT_FRAME,
 FLOAT_FRAME,
 ) = range(7)
 
-client_id = "rfm2mqtt_%d" % os.getpid()
-mq = paho.Client(client_id)
+# Global functions
+def iso_format(dt):
+    """ return an ISO string (at zulu time) from a datetime object
 
-LOGFORMAT = '%(asctime)-15s %(message)s'
+    :param dt: a datetime object (naive or not)
+    :type dt: datetime
+    :return: datetime as ISO string
+    :rtype: str
+    """
+    # naive is UTC other is convert to UTC
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    else:
+        dt = dt.astimezone(pytz.utc)
+    # convert dt to isostring at zero meridian time
+    isostring = datetime.strftime(dt, '%Y-%m-%dT%H:%M:%S.{0:03d}Z')
+    return isostring.format(int(round(dt.microsecond/1000.0)))
 
-if DEBUG:
-  logging.basicConfig(filename=LOGFILE,
-                      level=logging.DEBUG,
-                      format=LOGFORMAT)
-else:
-  logging.basicConfig(filename=LOGFILE,
-                      level=logging.INFO,
-                      format=LOGFORMAT)
-
-logging.info("start")
-logging.info("INFO MODE")
-logging.debug("DEBUG MODE")
-
-# define exception
+# Exception class
 class FrameDecodeError(Exception):
   def __init__(self, msg):
     self.msg = msg
@@ -227,6 +232,7 @@ def main_loop():
   """
   The main loop in which we stay connected to the broker
   """
+  global nodes
   while True:
     # Read for serial input, and split into values
     msg = ser.readline()
@@ -245,8 +251,7 @@ def main_loop():
         if (frame_type < 1) or (frame_type > 6):
           raise FrameDecodeError("frame type not in 1 to 6 interval")
         # publish lastseen for this node
-        mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/lastseen",
-                   str(int(time.time())))
+        nodes[node_id]['last_seen'] =  iso_format(datetime.utcnow())
         ## DEBUG
         print("node %d type %d" % (node_id, frame_type))
         # decode variable header
@@ -258,8 +263,8 @@ def main_loop():
           if (not all(c in string.printable for c in node_name)):
             raise FrameDecodeError("name char must be printable in hello frame")
           # publish node name
-          mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/name",
-                     node_name, retain=True)
+          nodes[node_id]['name'] = node_name
+          nodes[node_id]['last_hello'] = nodes[node_id]['last_seen']
         elif (frame_type == EVENT_FRAME):
           # event_id : value between 1 and 255
           event_id = int(items[3], 16)
@@ -317,6 +322,9 @@ def main_loop():
           # publish bool
           mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/float/" + str(float_id),
                      float_val)
+        # update info node topic
+        mq.publish(MQTT_ROOT_TOPIC + str(node_id) + "/infos",
+                   json.dumps(nodes[node_id]), retain=True)
       # it's a message
       elif (items[0] == "M"):
         do_nothing = 1
@@ -327,6 +335,28 @@ def main_loop():
       logging.debug("except IndexError or ValueError occur, skip frame")
     except FrameDecodeError as e_msg:
       logging.info("frame decode error : " + str(e_msg))
+
+# Global vars
+nodes = {}
+# init nodes dict
+for id in range(1,128):
+    nodes[id] = {'name': '', 'last_seen': '', 'last_hello': ''}
+# mqtt client ID
+client_id = "rfm2mqtt_%d" % os.getpid()
+mq = paho.Client(client_id)
+
+if DEBUG:
+  logging.basicConfig(filename=LOGFILE,
+                      level=logging.DEBUG,
+                      format=LOGFORMAT)
+else:
+  logging.basicConfig(filename=LOGFILE,
+                      level=logging.INFO,
+                      format=LOGFORMAT)
+
+logging.info("start")
+logging.info("INFO MODE")
+logging.debug("DEBUG MODE")
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
