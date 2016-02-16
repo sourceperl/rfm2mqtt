@@ -11,6 +11,7 @@
 
 import os
 import logging
+import logging.handlers
 import signal
 import socket
 import string
@@ -24,14 +25,12 @@ import pytz
 import json
 
 # Constant
-DEBUG = 0
-LOGFILE = "rfm2mqtt.log"
+LOG_LEVEL = logging.INFO
 SERIAL_DEVICE = "/dev/ttyUSB0"
 SERIAL_BAUD = 115200
 MQTT_HOST = "127.0.0.1"
 MQTT_PORT = 1883
 MQTT_ROOT_TOPIC = "rfm12/"
-LOGFORMAT = '%(asctime)-15s %(message)s'
 
 # Frame type
 (
@@ -194,8 +193,7 @@ def connect():
   mq.on_subscribe = on_subscribe
   mq.on_unsubscribe = on_unsubscribe
   mq.on_message = on_message
-  if DEBUG:
-    mq.on_log = on_log
+  mq.on_log = on_log
 
   mq.loop_start()
 
@@ -252,8 +250,6 @@ def main_loop():
           raise FrameDecodeError("frame type not in 1 to 6 interval")
         # publish lastseen for this node
         nodes[node_id]['last_seen'] =  iso_format(datetime.utcnow())
-        ## DEBUG
-        print("node %d type %d" % (node_id, frame_type))
         # decode variable header
         if (frame_type == HELLO_FRAME):
           if (len(items[3:]) != 8):
@@ -345,18 +341,15 @@ for id in range(1,128):
 client_id = "rfm2mqtt_%d" % os.getpid()
 mq = paho.Client(client_id)
 
-if DEBUG:
-  logging.basicConfig(filename=LOGFILE,
-                      level=logging.DEBUG,
-                      format=LOGFORMAT)
-else:
-  logging.basicConfig(filename=LOGFILE,
-                      level=logging.INFO,
-                      format=LOGFORMAT)
+# set log option
+logger = logging.getLogger()
+logger.setLevel(LOG_LEVEL)
+handler = logging.handlers.SysLogHandler(address='/dev/log')
+handler.setFormatter(logging.Formatter('%(module)s: %(message)s'))
+logger.addHandler(handler)
 
+# log startup
 logging.info("start")
-logging.info("INFO MODE")
-logging.debug("DEBUG MODE")
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
