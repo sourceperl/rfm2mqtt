@@ -1,16 +1,19 @@
 rfm2mqtt
 ========
 
-A gateway between RFM12 radio network and an MQTT borker
+A gateway between RFM12/69 radio network and an MQTT borker
 
-Python lib
+Python bin
 ----------
 
-add paho MQTT to your Python lib :
-
-  sudo pip install paho-mqtt
+  ./setup.sh
 
 MQTT broker/clients
 -------------------
 
   sudo apt-get install mosquitto mosquitto-clients
+
+Arduino nodes
+-------------
+
+  every tx nodes and rx gateway source code in arduino_nodes/
